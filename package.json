@@ -18,10 +18,11 @@
     "test": "node --test"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=20.19.0"
   },
   "dependencies": {
+    "dotenv": "^17.4.2",
     "express": "^5.2.1",
-    "mongoose": "^8.19.1"
+    "mongoose": "^9.9.4"
   }
 }
