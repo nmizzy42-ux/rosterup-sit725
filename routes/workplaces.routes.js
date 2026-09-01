@@ -2,22 +2,28 @@ const express = require('express');
 const router = express.Router();
 // const {  } = require('../controllers/workplaces.controller');
 
+function notImplemented(req, res) {
+    return res.status(501).json({
+        error: 'This workplace operation has not been implemented yet',
+    });
+}
+
 // Create workplace 
-router.post('/', );
+router.post('/', notImplemented);
 
 // Get all workplaces 
-router.get('/', );
+router.get('/', notImplemented);
 
 // Get workplace details  
-router.get('/:id', );
+router.get('/:id', notImplemented);
 
 // Update workplace details 
-router.put('/:id', );
+router.put('/:id', notImplemented);
 
 // Employee joins using invite code
-router.post('/join', );
+router.post('/join', notImplemented);
 
 // Regenerate invite code   
-router.post('/:id/invite-code', );
+router.post('/:id/invite-code', notImplemented);
 
 module.exports = router;

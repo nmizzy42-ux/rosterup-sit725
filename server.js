@@ -2,11 +2,12 @@
 const express = require('express'); 
 const path = require('path'); 
 const mongoose = require('mongoose');
+require('dotenv').config();
 const app = express(); 
 const port = process.env.PORT || 3000; 
 
 // Open Question - AWS or GCP to host?
-mongoose.connect(`mongodb://127.0.0.1:27017/RUDatabase`);
+mongoose.connect(process.env.MONGO_URI);
 mongoose.connection.on('connected', () => { console.log('Connected to MongoDB!'); });
 
 // Import Routes
