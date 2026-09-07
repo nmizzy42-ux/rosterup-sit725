@@ -1,8 +1,14 @@
 const express = require('express');
 const router = express.Router();
-// const {  } = require('../controllers/users.controller');
+const { getUsersController } = require('../controllers/users.controller');
 
 function notImplemented(req, res) {
+    return res.status(501).json({
+        error: 'This user operation has not been implemented yet',
+    });
+}
+
+function authenticateUser(req, res) {
     return res.status(501).json({
         error: 'This user operation has not been implemented yet',
     });
@@ -19,6 +25,9 @@ router.post('/logout', notImplemented);
 
 // Get user/profile details
 router.get('/:id', notImplemented);
+
+// List pending employees
+router.get('/pending', authenticateUser, getUsersController);
 
 // Update profile details
 router.put('/:id', notImplemented);
