@@ -27,7 +27,7 @@ router.post('/logout', notImplemented);
 router.get('/:id', notImplemented);
 
 // List pending employees
-router.get('/pending', authenticateUser, getUsersController);
+router.get('/pending', getUsersController);
 
 // Update profile details
 router.put('/:id', notImplemented);
