@@ -49,7 +49,11 @@ async function performLogin(email, password) {
       localStorage.setItem('rosterup_user', JSON.stringify(data.user));
 
       if (data.user.role === 'manager') {
-        window.location.href = 'manager-dashboard.html';
+        // A manager with no workplace yet (e.g. straight after registering)
+        // can't do anything useful on the dashboard — no invite code, no
+        // team. Send them to set one up first instead.
+        const hasWorkplace = await checkManagerHasWorkplace(data.token);
+        window.location.href = hasWorkplace ? 'manager-dashboard.html' : 'manager-workplace-setup.html';
       } else {
         window.location.href = 'employee-dashboard.html';
       }
@@ -69,5 +73,23 @@ async function performLogin(email, password) {
     demoEmployeeBtn.disabled = false;
     demoManagerBtn.disabled = false;
     submitBtn.textContent = 'Sign In';
+  }
+}
+
+// Returns true if the just-signed-in manager already owns a workplace.
+// Errs toward the dashboard (true) if the check itself fails, rather than
+// risking stranding a manager who does have a workplace on the setup page.
+async function checkManagerHasWorkplace(token) {
+  try {
+    const response = await fetch('/api/workplaces/mine', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (!response.ok) return true;
+
+    const data = await response.json();
+    return Boolean(data.workplace);
+  } catch (err) {
+    console.error('Failed to check for an existing workplace:', err);
+    return true;
   }
 }

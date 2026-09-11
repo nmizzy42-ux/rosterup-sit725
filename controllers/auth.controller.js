@@ -1,4 +1,5 @@
 const User = require('../models/User');
+const Workplace = require('../models/Workplace');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
@@ -41,6 +42,25 @@ exports.register = async (req, res) => {
             });
         }
 
+        //FR-08: Resolve the invite code to a real workplace before creating
+        //the account. This used to be a no-op (see git history) — the code
+        //was accepted from the form but never looked up, so every employee
+        //ended up with workplace: null regardless of what they typed.
+        let targetWorkplace = null;
+        if (normalizedRole === 'employee') {
+            targetWorkplace = await Workplace.findOne({
+                invite_code: workplaceInviteCode.trim().toUpperCase(),
+                active: true
+            });
+
+            if (!targetWorkplace) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Invalid workplace invite code."
+                });
+            }
+        }
+
         //Security: Hash the raw text password
         const saltRounds = 10;
         const hashedPassword = await bcrypt.hash(password, saltRounds);
@@ -57,9 +77,7 @@ exports.register = async (req, res) => {
 
         if (normalizedRole === 'employee') {
             newUserPayload.workplace_status = 'pending';
-            // Once workplace lookup logic is built: 
-            // const targetWorkplace = await Workplace.findOne({ inviteCode: workplaceInviteCode });
-            // newUserPayload.workplace = targetWorkplace._id;
+            newUserPayload.workplace = targetWorkplace._id;
         }
 
         //Save records into MongoDB

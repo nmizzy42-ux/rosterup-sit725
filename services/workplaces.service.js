@@ -57,8 +57,28 @@ async function createWorkplace(
     });
 }
 
+// Looks up the workplace a manager already owns, if any. Used by the
+// frontend to decide whether a manager still needs to go through workplace
+// setup (a manager can only ever have one workplace right now — there's no
+// multi-workplace support anywhere else in the app either).
+async function getWorkplaceByManagerId(
+    managerId,
+    dependencies = {},
+) {
+    const WorkplaceModel = dependencies.WorkplaceModel || Workplace;
+
+    if (!managerId) {
+        const error = new Error('An authenticated manager is required');
+        error.statusCode = 401;
+        throw error;
+    }
+
+    return WorkplaceModel.findOne({ manager_id: managerId });
+}
+
 module.exports = {
     createWorkplace,
     normaliseWorkplaceInput,
     validateWorkplaceInput,
+    getWorkplaceByManagerId,
 };

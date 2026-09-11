@@ -1,7 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
-const { createWorkplace } = require('../services/workplaces.service');
+const { createWorkplace, getWorkplaceByManagerId } = require('../services/workplaces.service');
 
 const validInput = {
     workplace_name: '  Corner Cafe  ',
@@ -51,6 +51,41 @@ test('createWorkplace rejects missing required fields', async () => {
 test('createWorkplace requires an authenticated manager', async () => {
     await assert.rejects(
         createWorkplace(validInput),
+        (error) => {
+            assert.equal(error.statusCode, 401);
+            return true;
+        },
+    );
+});
+
+test('getWorkplaceByManagerId returns the manager\'s workplace when one exists', async () => {
+    const WorkplaceModel = {
+        async findOne(query) {
+            assert.deepEqual(query, { manager_id: 'manager-1' });
+            return { _id: 'workplace-1', workplace_name: 'Corner Cafe' };
+        },
+    };
+
+    const workplace = await getWorkplaceByManagerId('manager-1', { WorkplaceModel });
+
+    assert.equal(workplace._id, 'workplace-1');
+});
+
+test('getWorkplaceByManagerId returns null when the manager has none yet', async () => {
+    const WorkplaceModel = {
+        async findOne() {
+            return null;
+        },
+    };
+
+    const workplace = await getWorkplaceByManagerId('manager-1', { WorkplaceModel });
+
+    assert.equal(workplace, null);
+});
+
+test('getWorkplaceByManagerId requires an authenticated manager', async () => {
+    await assert.rejects(
+        getWorkplaceByManagerId(),
         (error) => {
             assert.equal(error.statusCode, 401);
             return true;

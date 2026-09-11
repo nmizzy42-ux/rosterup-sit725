@@ -18,10 +18,57 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   document.getElementById('logoutLink').addEventListener('click', handleLogout);
+  document.getElementById('dashCopyInviteBtn').addEventListener('click', handleCopyInviteCode);
 
+  checkWorkplace();
   loadPendingEmployees();
   loadPendingClaims();
 });
+
+// Signing in already redirects a workplace-less manager to
+// manager-workplace-setup.html, but a manager can still land here directly
+// (bookmark, back button, typed URL) — the banner below is the fallback for
+// that case. Once a workplace exists, this also surfaces its invite code
+// right on the dashboard (not just once, right after creation) so a
+// manager can always come back here to copy it for a new hire.
+async function checkWorkplace() {
+  const banner = document.getElementById('workplaceBanner');
+  const inviteCard = document.getElementById('inviteCodeCard');
+  const token = localStorage.getItem('rosterup_token');
+
+  try {
+    const response = await fetch('/api/workplaces/mine', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    if (!response.ok) return; // don't show either widget off an uncertain check
+
+    const data = await response.json();
+    if (!data.workplace) {
+      banner.classList.remove('hidden');
+    } else {
+      document.getElementById('dashInviteCode').textContent = data.workplace.invite_code;
+      inviteCard.classList.remove('hidden');
+    }
+  } catch (err) {
+    console.error('Failed to check for an existing workplace:', err);
+  }
+}
+
+async function handleCopyInviteCode() {
+  const code = document.getElementById('dashInviteCode').textContent;
+  const copyBtn = document.getElementById('dashCopyInviteBtn');
+
+  try {
+    await navigator.clipboard.writeText(code);
+  } catch (err) {
+    console.error('Clipboard copy failed:', err);
+  }
+
+  const originalHtml = copyBtn.innerHTML;
+  copyBtn.innerHTML = '<span class="material-icons">check</span> Copied!';
+  setTimeout(() => { copyBtn.innerHTML = originalHtml; }, 1500);
+}
 
 function timeOfDayGreeting() {
   const hour = new Date().getHours();

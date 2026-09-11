@@ -44,3 +44,43 @@ test('logout always responds with success (stateless JWT)', async () => {
     assert.equal(response.statusCode, 200);
     assert.equal(response.body.success, true);
 });
+
+test('register rejects employee registration missing required fields', async () => {
+    const response = createResponseRecorder();
+
+    await authController.register({
+        body: { email: 'nat@test.com', password: 'test1234', role: 'employee' },
+    }, response);
+
+    assert.equal(response.statusCode, 400);
+    assert.equal(response.body.success, false);
+});
+
+test('register rejects an invalid role', async () => {
+    const response = createResponseRecorder();
+
+    await authController.register({
+        body: {
+            first_name: 'Nat', last_name: 'Smith',
+            email: 'nat@test.com', password: 'test1234', role: 'owner',
+        },
+    }, response);
+
+    assert.equal(response.statusCode, 400);
+    assert.equal(response.body.success, false);
+});
+
+test('register rejects employee registration without a workplace invite code', async () => {
+    const response = createResponseRecorder();
+
+    await authController.register({
+        body: {
+            first_name: 'Nat', last_name: 'Smith',
+            email: 'nat@test.com', password: 'test1234', role: 'employee',
+        },
+    }, response);
+
+    assert.equal(response.statusCode, 400);
+    assert.equal(response.body.success, false);
+    assert.match(response.body.message, /invite code/i);
+});

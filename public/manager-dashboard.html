@@ -43,6 +43,9 @@
         <span class="mgr-nav-item mgr-nav-item--disabled" title="Not built yet">
           <span class="material-icons">settings</span> Business Settings
         </span>
+        <a href="manager-chat.html" class="mgr-nav-item">
+          <span class="material-icons">forum</span> Team Chat
+        </a>
         <a href="manager-profile.html" class="mgr-nav-item">
           <span class="material-icons">person</span> Profile
         </a>
@@ -70,6 +73,25 @@
       </div>
 
       <div id="dashMessage" class="alert-box hidden"></div>
+
+      <div id="workplaceBanner" class="mgr-workplace-banner hidden">
+        <span class="material-icons">store</span>
+        <p>You haven't set up your workplace yet — your team can't join or see shifts until you do.</p>
+        <a href="manager-workplace-setup.html">Set up now</a>
+      </div>
+
+      <div id="inviteCodeCard" class="mgr-invite-card hidden">
+        <div class="mgr-invite-info">
+          <span class="material-icons">confirmation_number</span>
+          <div>
+            <p class="mgr-invite-label">Your workplace invite code</p>
+            <p class="mgr-invite-code" id="dashInviteCode">—</p>
+          </div>
+        </div>
+        <button type="button" id="dashCopyInviteBtn" class="btn-outline mgr-invite-copy-btn">
+          <span class="material-icons">content_copy</span> Copy
+        </button>
+      </div>
 
       <div class="mgr-stats-grid">
         <div class="mgr-stat-card mgr-stat-card--static">

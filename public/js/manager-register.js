@@ -26,7 +26,7 @@ document.getElementById('managerRegisterForm').addEventListener('submit', async 
     const data = await response.json();
 
     if (response.ok && data.success) {
-      messageBox.textContent = 'Account created! Redirecting to sign in…';
+      messageBox.textContent = 'Account created! Redirecting to sign in — you\'ll set up your workplace next.';
       messageBox.className = 'alert-box alert-success';
       document.getElementById('password').value = '';
       setTimeout(() => { window.location.href = 'sign-in.html'; }, 1200);
