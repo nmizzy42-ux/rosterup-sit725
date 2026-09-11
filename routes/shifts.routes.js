@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getOpenShiftsController } = require('../controllers/shifts.controller');
+const { getOpenShiftsController, listPendingClaims } = require('../controllers/shifts.controller');
 
 function notImplemented(req, res) {
     return res.status(501).json({
@@ -13,6 +13,9 @@ router.post('/', notImplemented);
 
 // Get Shifts
 router.get('/', getOpenShiftsController);
+
+// Manager Lists Pending Shift Claims
+router.get('/claims', listPendingClaims);
 
 // Get Shift by ID
 router.get('/:id', notImplemented);
