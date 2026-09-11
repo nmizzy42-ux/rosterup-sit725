@@ -75,6 +75,37 @@ nav {
 }
 
 /* --------------------------------------------------------------------------
+   Shared logo mark — "R" box + "RosterUp" text. Used on the auth pages and
+   the app shells (manager/employee sidebars). Lives here (not in a single
+   page's CSS file) so every page that reuses it gets it for free instead of
+   silently rendering unstyled markup.
+   -------------------------------------------------------------------------- */
+
+.auth-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+.auth-logo-box {
+  width: 40px;
+  height: 40px;
+  border-radius: 0.75rem;
+  background: var(--color-primary);
+  color: #fff;
+  font-weight: 700;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.auth-logo-text {
+  font-weight: 700;
+  font-size: 1.125rem;
+  color: var(--color-foreground);
+}
+
+/* --------------------------------------------------------------------------
    Shared buttons — used across multiple pages (Welcome, Sign In, etc.)
    -------------------------------------------------------------------------- */
 

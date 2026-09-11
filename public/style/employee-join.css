@@ -1,39 +1,26 @@
-/* Container Layout constraints */
-.ej-wrapper {
-    width: 100%;
-    max-width: 32rem;
-    margin: 2rem auto;
-}
-
-.ej-header {
-    margin-bottom: 2rem;
-    text-align: center;
-}
-
-.ej-header h2 {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--color-foreground);
-    margin-top: 1.5rem;
-    margin-bottom: 0.5rem;
-}
-
-.ej-header p {
-    font-size: 0.875rem;
-    color: #6B7280;
-}
+/* ==========================================================================
+   employee-join.css — page-specific bits for the "Join your workplace" form.
+   The card/logo/field/button styles come from sign-in.css (shared .auth-*
+   pattern) — this file only adds what's unique to this page.
+   ========================================================================== */
 
 /* Horizontal configuration for First and Last name fields */
 .ej-row {
     display: flex;
     gap: 1rem;
 }
-
-.ej-row .input-field {
+.ej-row .field {
     flex: 1;
 }
 
-/* Custom Message Block styles */
+/* Workplace invite codes read like ROSTER-4821 — monospace + uppercase
+   makes that easier to read and matches the design. */
+.ej-invite-input {
+    font-family: 'DM Mono', 'SFMono-Regular', Consolas, monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
 .hidden {
     display: none !important;
 }
@@ -57,21 +44,4 @@
     background-color: #FDF2F2;
     color: var(--color-destructive);
     border: 1px solid rgba(226, 86, 86, 0.15);
-}
-
-.ej-footer-text {
-    text-align: center;
-    font-size: 0.875rem;
-    color: #6B7280;
-    margin-top: 1.5rem;
-}
-
-.ej-footer-text a {
-    color: var(--color-primary);
-    font-weight: 600;
-    text-decoration: none;
-}
-
-.ej-footer-text a:hover {
-    text-decoration: underline;
 }

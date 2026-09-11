@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RosterUp — Employees</title>
+  <title>RosterUp — Shift Approvals</title>
 
   <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
   <link rel="stylesheet" href="/style/main.css">
   <link rel="stylesheet" href="/style/manager-dashboard.css">
-  <link rel="stylesheet" href="/style/manager-approvals.css">
+  <link rel="stylesheet" href="/style/manager-shift-approvals.css">
 </head>
 <body>
 
@@ -29,10 +29,10 @@
         <a href="manager-dashboard.html" class="mgr-nav-item">
           <span class="material-icons">dashboard</span> Dashboard
         </a>
-        <a href="manager-approvals.html" class="mgr-nav-item mgr-nav-item--active">
+        <a href="manager-approvals.html" class="mgr-nav-item">
           <span class="material-icons">group</span> Employees
         </a>
-        <a href="manager-shift-approvals.html" class="mgr-nav-item">
+        <a href="manager-shift-approvals.html" class="mgr-nav-item mgr-nav-item--active">
           <span class="material-icons">assignment</span> Shift Approvals
         </a>
         <span class="mgr-nav-item mgr-nav-item--disabled" title="Not built yet">
@@ -65,25 +65,16 @@
 
     <main class="mgr-main">
       <div class="mgr-page-header">
-        <h1>Employees</h1>
-        <p>Review, approve, or reject team members requesting access to your workplace roster.</p>
+        <h1>Shift Approvals</h1>
+        <p>Review shift cover requests from your team</p>
       </div>
 
-      <div class="mar-wrap">
-        <div id="globalMessage" class="alert-box hidden"></div>
-
-        <div id="loadingState" class="mgr-empty-card"><p>Loading…</p></div>
-
-        <div id="requestList" class="mgr-request-list hidden"></div>
-
-        <div id="emptyState" class="mgr-empty-card hidden">
-          <p style="font-weight:700; color:var(--color-foreground); margin-bottom:0.25rem;">All caught up!</p>
-          <p>There are no pending employee requests right now.</p>
-        </div>
+      <div id="claimsList" class="msa-list">
+        <div class="mgr-empty-card"><p>Loading…</p></div>
       </div>
     </main>
   </div>
 
-  <script src="js/manager-approvals.js"></script>
+  <script src="js/manager-shift-approvals.js"></script>
 </body>
 </html>

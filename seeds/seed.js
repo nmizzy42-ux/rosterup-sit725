@@ -6,92 +6,92 @@ const User = require('../models/User');
 const Workplace = require('../models/Workplace');
 const Shift = require('../models/Shift');
 
+// Fixed demo dataset used by the sign-in page's "Quick Demo Access" buttons.
+//
+// IMPORTANT: this script is idempotent and non-destructive. It only ever
+// touches the specific demo records below (matched by their fixed email
+// addresses / invite code), so it's safe to run again and again without
+// wiping out anyone else's manually-registered test accounts, workplaces,
+// or shifts. (Earlier versions of this script called deleteMany({}) on all
+// three collections first, which is exactly the kind of thing that erases
+// a teammate's own test data — don't reintroduce that.)
+const DEMO_PASSWORD = 'Password123!';
+const DEMO_INVITE_CODE = 'ROSTER123';
+
 const seedDatabase = async () => {
     try {
         await mongoose.connect(process.env.MONGO_URI);
         console.log('Connected to MongoDB');
 
-        // Clear existing test data
-        await Shift.deleteMany({});
-        await User.deleteMany({});
-        await Workplace.deleteMany({});
+        const password = await bcrypt.hash(DEMO_PASSWORD, 10);
 
-        const password = await bcrypt.hash('Password123!', 10);
+        // Upsert the manager first — the demo workplace links to them next.
+        const manager = await User.findOneAndUpdate(
+            { email: 'john.smith@test.com' },
+            {
+                $set: {
+                    first_name: 'John',
+                    last_name: 'Smith',
+                    email: 'john.smith@test.com',
+                    password_hashed: password,
+                    role: 'manager',
+                    workplace_status: 'approved',
+                    active: true
+                }
+            },
+            { upsert: true, new: true, setDefaultsOnInsert: true }
+        );
 
-        // Create manager
-        const manager = await User.create({
-            first_name: 'John',
-            last_name: 'Smith',
-            email: 'john.smith@test.com',
-            password_hashed: password,
-            role: 'manager',
-            workplace_status: 'approved',
-            active: true
-        });
+        // Upsert the demo workplace (matched by its fixed invite code).
+        const workplace = await Workplace.findOneAndUpdate(
+            { invite_code: DEMO_INVITE_CODE },
+            {
+                $set: {
+                    workplace_name: 'RosterUp Cafe',
+                    workplace_type: 'Hospitality',
+                    workplace_address: '100 Example Street',
+                    workplace_town: 'Melbourne',
+                    workplace_postcode: '3000',
+                    invite_code: DEMO_INVITE_CODE,
+                    manager_id: manager._id,
+                    active: true
+                }
+            },
+            { upsert: true, new: true, setDefaultsOnInsert: true }
+        );
 
-        // Create workplace
-        const workplace = await Workplace.create({
-            workplace_name: 'RosterUp Cafe',
-            workplace_type: 'Hospitality',
-            workplace_address: '100 Example Street',
-            workplace_town: 'Melbourne',
-            workplace_postcode: '3000',
-            invite_code: 'ROSTER123',
-            manager_id: manager._id,
-            active: true
-        });
-
-        // Add workplace to manager
         manager.workplace = workplace._id;
         await manager.save();
 
-        // Create employees
-        const sarah = await User.create({
-            first_name: 'Sarah',
-            last_name: 'Jones',
-            email: 'sarah.jones@test.com',
-            password_hashed: password,
-            role: 'employee',
-            workplace: workplace._id,
-            workplace_status: 'approved',
-            active: true
-        });
+        // Upsert the three approved demo employees.
+        const [sarah, michael, emily] = await Promise.all([
+            User.findOneAndUpdate(
+                { email: 'sarah.jones@test.com' },
+                { $set: { first_name: 'Sarah', last_name: 'Jones', email: 'sarah.jones@test.com', password_hashed: password, role: 'employee', workplace: workplace._id, workplace_status: 'approved', active: true } },
+                { upsert: true, new: true, setDefaultsOnInsert: true }
+            ),
+            User.findOneAndUpdate(
+                { email: 'michael.brown@test.com' },
+                { $set: { first_name: 'Michael', last_name: 'Brown', email: 'michael.brown@test.com', password_hashed: password, role: 'employee', workplace: workplace._id, workplace_status: 'approved', active: true } },
+                { upsert: true, new: true, setDefaultsOnInsert: true }
+            ),
+            User.findOneAndUpdate(
+                { email: 'emily.wilson@test.com' },
+                { $set: { first_name: 'Emily', last_name: 'Wilson', email: 'emily.wilson@test.com', password_hashed: password, role: 'employee', workplace: workplace._id, workplace_status: 'approved', active: true } },
+                { upsert: true, new: true, setDefaultsOnInsert: true }
+            )
+        ]);
 
-        const michael = await User.create({
-            first_name: 'Michael',
-            last_name: 'Brown',
-            email: 'michael.brown@test.com',
-            password_hashed: password,
-            role: 'employee',
-            workplace: workplace._id,
-            workplace_status: 'approved',
-            active: true
-        });
+        // Upsert the one employee still awaiting approval.
+        await User.findOneAndUpdate(
+            { email: 'james.taylor@test.com' },
+            { $set: { first_name: 'James', last_name: 'Taylor', email: 'james.taylor@test.com', password_hashed: password, role: 'employee', workplace: workplace._id, workplace_status: 'pending', active: true } },
+            { upsert: true, new: true, setDefaultsOnInsert: true }
+        );
 
-        const emily = await User.create({
-            first_name: 'Emily',
-            last_name: 'Wilson',
-            email: 'emily.wilson@test.com',
-            password_hashed: password,
-            role: 'employee',
-            workplace: workplace._id,
-            workplace_status: 'approved',
-            active: true
-        });
-
-        // Employee awaiting workplace approval
-        await User.create({
-            first_name: 'James',
-            last_name: 'Taylor',
-            email: 'james.taylor@test.com',
-            password_hashed: password,
-            role: 'employee',
-            workplace: workplace._id,
-            workplace_status: 'pending',
-            active: true
-        });
-
-        // Create realistic shifts
+        // Replace only THIS demo workplace's sample shifts — never touches
+        // shifts belonging to any other workplace.
+        await Shift.deleteMany({ workplace: workplace._id });
         await Shift.insertMany([
             {
                 workplace: workplace._id,
@@ -147,12 +147,12 @@ const seedDatabase = async () => {
             }
         ]);
 
-        console.log('Database seeded successfully');
+        console.log('Demo data seeded successfully (existing non-demo data left untouched)');
         console.log(`Workplace: ${workplace.workplace_name}`);
         console.log(`Workplace ID: ${workplace._id}`);
         console.log(`Manager ID: ${manager._id}`);
-        console.log('Invite code: ROSTER123');
-        console.log('Test password: Password123!');
+        console.log(`Invite code: ${DEMO_INVITE_CODE}`);
+        console.log(`Test password: ${DEMO_PASSWORD}`);
 
     } catch (error) {
         console.error('Error seeding database:', error);

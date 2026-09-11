@@ -7,15 +7,6 @@ function notImplemented(req, res) {
     });
 }
 
-// Register a manager or employee
-router.post('/register', notImplemented);
-
-// Authenticate user
-router.post('/login', notImplemented);
-
-// Log user out
-router.post('/logout', notImplemented);
-
 // Get user/profile details
 router.get('/:id', notImplemented);
 

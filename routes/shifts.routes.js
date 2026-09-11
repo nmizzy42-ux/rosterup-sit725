@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { getOpenShiftsController, listPendingClaims } = require('../controllers/shifts.controller');
+const { requireAuth, requireRole } = require('../middleware/auth.middleware');
 
 function notImplemented(req, res) {
     return res.status(501).json({
@@ -15,7 +16,11 @@ router.post('/', notImplemented);
 router.get('/', getOpenShiftsController);
 
 // Manager Lists Pending Shift Claims
-router.get('/claims', listPendingClaims);
+// (The controller itself already checks req.user and the manager role, but
+// without requireAuth here req.user is never set at all — every request
+// hit the 401 branch regardless of token. Same class of bug as the
+// manager.routes.js pattern this mirrors.)
+router.get('/claims', requireAuth, requireRole('manager'), listPendingClaims);
 
 // Get Shift by ID
 router.get('/:id', notImplemented);

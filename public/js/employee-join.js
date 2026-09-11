@@ -8,14 +8,22 @@
         const last_name = document.getElementById('lastName').value.trim();
         const email = document.getElementById('email').value.trim();
         const password = document.getElementById('password').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
         const workplaceInviteCode = document.getElementById('inviteCode').value.trim();
 
         //Explicitly force user role to skip selections
         const role = 'employee';
 
+        messageBox.className = 'alert-box hidden';
+
+        if (password !== confirmPassword) {
+            messageBox.textContent = 'Passwords do not match.';
+            messageBox.className = 'alert-box alert-error';
+            return;
+        }
+
         submitBtn.disabled = true;
         submitBtn.textContent = 'Processing...';
-        messageBox.className = 'alert-box hidden';
 
         try {
             const response = await fetch('/api/auth/register', {
@@ -39,11 +47,12 @@
                 messageBox.textContent = `Registration submitted! Status is: ${data.user.workplace_status.toUpperCase()}.`;
                 messageBox.className = 'alert-box alert-success';
                 document.getElementById('password').value = '';
+                document.getElementById('confirmPassword').value = '';
             } else {
                 messageBox.textContent = data.message || 'An error occurred during submission.';
                 messageBox.className = 'alert-box alert-error';
                 submitBtn.disabled = false;
-                submitBtn.textContent = 'Submit Request';
+                submitBtn.textContent = 'Join Workplace';
             }
 
         } catch (err) {

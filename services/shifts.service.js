@@ -8,7 +8,11 @@ function createHttpError(message, statusCode) {
 }
 
 async function getShiftsService(filter) {
-    const shifts = await Shift.find(filter);
+    // Populated so the client can show who posted the shift without a
+    // separate lookup (same pattern as listPendingClaims below).
+    const shifts = await Shift.find(filter)
+        .populate('posted_by', 'first_name last_name')
+        .sort({ shift_date: 1, start_time: 1 });
     return shifts;
 }
 

@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 
 exports.register = async (req, res) => {
     try {
@@ -84,6 +85,121 @@ exports.register = async (req, res) => {
         return res.status(500).json({
             success: false,
             message: "Internal server validation error.",
+            error: error.message
+        });
+    }
+};
+
+//FR-02: Authenticate an existing user and issue a JWT
+exports.login = async (req, res) => {
+    try {
+        const { email, password } = req.body;
+
+        if (!email || !password) {
+            return res.status(400).json({
+                success: false,
+                message: "Email and password are required."
+            });
+        }
+
+        //Look up by email; don't reveal whether the email or the password was wrong
+        const user = await User.findOne({ email: email.toLowerCase().trim() });
+        if (!user || !user.active) {
+            return res.status(401).json({
+                success: false,
+                message: "Invalid email or password."
+            });
+        }
+
+        const passwordMatches = await bcrypt.compare(password, user.password_hashed);
+        if (!passwordMatches) {
+            return res.status(401).json({
+                success: false,
+                message: "Invalid email or password."
+            });
+        }
+
+        if (!process.env.JWT_SECRET) {
+            console.error("Login Error: JWT_SECRET is not set in the environment.");
+            return res.status(500).json({
+                success: false,
+                message: "Server misconfiguration: missing JWT secret."
+            });
+        }
+
+        const token = jwt.sign(
+            { id: user._id, role: user.role },
+            process.env.JWT_SECRET,
+            { expiresIn: '7d' }
+        );
+
+        return res.status(200).json({
+            success: true,
+            message: "Login successful.",
+            token,
+            user: {
+                id: user._id,
+                first_name: user.first_name,
+                last_name: user.last_name,
+                email: user.email,
+                role: user.role,
+                workplace_status: user.workplace_status
+            }
+        });
+
+    } catch (error) {
+        console.error("Login Error:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error during login.",
+            error: error.message
+        });
+    }
+};
+
+//FR-02: Sign out. The token is a stateless JWT, so there's nothing to
+//invalidate server-side yet — the client discards it. This endpoint exists
+//so the frontend has a real call to make, and a place to hook a token
+//blacklist/session store later if that's ever needed.
+exports.logout = async (req, res) => {
+    return res.status(200).json({
+        success: true,
+        message: "Logged out successfully."
+    });
+};
+
+//GET /api/auth/me — returns the current user's up-to-date profile.
+//The JWT payload only carries {id, role}, and the client otherwise only
+//refreshes its cached profile (localStorage) at login time — so without
+//this, an employee whose workplace_status changes (e.g. a manager approves
+//their request) would never see that reflected until they log out and back
+//in. Dashboards call this on load to pick up changes like that.
+exports.me = async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+        if (!user || !user.active) {
+            return res.status(401).json({
+                success: false,
+                message: "Invalid or expired session."
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            user: {
+                id: user._id,
+                first_name: user.first_name,
+                last_name: user.last_name,
+                email: user.email,
+                role: user.role,
+                workplace_status: user.workplace_status
+            }
+        });
+    } catch (error) {
+        console.error("Fetch Current User Error:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error while fetching profile.",
             error: error.message
         });
     }
