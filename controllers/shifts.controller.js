@@ -1,5 +1,51 @@
 const shiftsService = require('../services/shifts.service');
 
+const postShiftsController = async (req, res) => {
+    try {
+        const shiftBody = req.body;
+
+        const postedShift = await shiftsService.postShiftsService(shiftBody);
+
+        res.status(200).json(postedShift);
+    } catch (error) {
+        if (error.name == "ValidationError") {
+            res.status(500).json({message: `Data inputted incorrectly. Please check the ${Object.keys(error.errors).join(", ")} fields and ensure they are inputted correctly.`})
+        } else {
+            res.status(500).json({ message: error.message, error: error });
+        }
+        
+    }
+};
+
+const withdrawShiftsController = async (req, res) => {
+    try {
+        const { shiftId } = req.query;
+
+        if (!shiftId) {
+            return res.status(400).json({
+                message: 'shiftId is required'
+            });
+        }
+
+        const filter = {_id: shiftId};
+
+        const withdrawnShift = await shiftsService.withdrawShiftsService(filter);
+
+        if (!withdrawnShift) {
+            return res.status(404).json({
+                message: 'Shift not found'
+            });
+        }
+
+        return res.status(200).json(withdrawnShift);
+
+    } catch (error) {
+        return res.status(500).json({
+            message: error.message
+        });
+    }
+};
+
 const getOpenShiftsController = async (req, res) => {
     try {
         const { workplace } = req.query;
@@ -59,4 +105,6 @@ module.exports = {
     getOpenShiftsController,
     buildListPendingClaimsController,
     listPendingClaims,
+    postShiftsController,
+    withdrawShiftsController
 };

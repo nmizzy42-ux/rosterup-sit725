@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const { getOpenShiftsController, listPendingClaims } = require('../controllers/shifts.controller');
+const { getOpenShiftsController, listPendingClaims, postShiftsController, withdrawShiftsController } = require('../controllers/shifts.controller');
 const { requireAuth, requireRole } = require('../middleware/auth.middleware');
+
 
 function notImplemented(req, res) {
     return res.status(501).json({
@@ -10,7 +11,7 @@ function notImplemented(req, res) {
 }
 
 // Create / Post a shift for cover
-router.post('/', notImplemented);
+router.post('/', postShiftsController);
 
 // Get Shifts
 router.get('/', getOpenShiftsController);
@@ -21,6 +22,8 @@ router.get('/', getOpenShiftsController);
 // hit the 401 branch regardless of token. Same class of bug as the
 // manager.routes.js pattern this mirrors.)
 router.get('/claims', requireAuth, requireRole('manager'), listPendingClaims);
+// Employee who claimed shift withdraws claim
+router.put('/withdraw', withdrawShiftsController);
 
 // Get Shift by ID
 router.get('/:id', notImplemented);
