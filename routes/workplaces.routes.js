@@ -8,7 +8,7 @@ function notImplemented(req, res) {
     });
 }
 
-// Create workplace 
+// Create workplace
 router.post('/', createWorkplace);
 
 // Get all workplaces 

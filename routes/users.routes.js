@@ -6,7 +6,7 @@ function notImplemented(req, res) {
     return res.status(501).json({
         error: 'This user operation has not been implemented yet',
     });
-};
+}
 
 // Register a manager or employee
 router.post('/register', notImplemented);
