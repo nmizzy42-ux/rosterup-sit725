@@ -1,6 +1,5 @@
 const express = require('express');
 const router = express.Router();
-const { getPendingEmployeesController } = require('../controllers/users.controller');
 
 function notImplemented(req, res) {
     return res.status(501).json({
@@ -16,9 +15,6 @@ router.post('/login', notImplemented);
 
 // Log user out
 router.post('/logout', notImplemented);
-
-// List pending employees
-router.get('/pending', getPendingEmployeesController);
 
 // Get user/profile details
 router.get('/:id', notImplemented);

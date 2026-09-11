@@ -15,6 +15,7 @@ const shiftRoutes = require('./routes/shifts.routes');
 const userRoutes = require('./routes/users.routes');
 const workplaceRoutes = require('./routes/workplaces.routes');
 const authRoutes = require('./routes/auth.routes');
+const managerRoutes = require('./routes/manager.routes');
 
 app.use(express.static(path.join(__dirname, 'public'))); 
 
@@ -26,6 +27,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/workplaces', workplaceRoutes);
 app.use('/api/shifts', shiftRoutes);
+app.use('/api/manager', managerRoutes);
 
 app.listen(port, () => { 
     console.log(`Server is running on http://localhost:${port}`); 
