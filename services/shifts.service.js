@@ -89,6 +89,37 @@ async function listPendingClaims(managerId, dependencies = {}) {
         .lean();
 }
 
+// Employee claims an open shift — FR-13 / FR-14. The shift moves straight
+// to 'pending' (not 'covered') so the claim still needs manager review via
+// processShiftClaim below; scoping to status: 'open' in the filter (rather
+// than checking shift.status after the fact) also makes this atomic, so two
+// employees racing to claim the same shift can't both succeed.
+async function claimShift(shiftId, employeeId, dependencies = {}) {
+    if (!employeeId) {
+        throw createHttpError('An authenticated employee is required', 401);
+    }
+
+    const ShiftModel = dependencies.ShiftModel || Shift;
+
+    const shift = await ShiftModel.findOneAndUpdate(
+        {
+            _id: shiftId,
+            status: 'open',
+        },
+        {
+            claimed_by: employeeId,
+            status: 'pending',
+        },
+        { new: true }
+    );
+
+    if (!shift) {
+        throw createHttpError('Open shift not found.', 404);
+    }
+
+    return shift;
+}
+
 const VALID_CLAIM_ACTIONS = ['approve', 'reject'];
 
 // Manager approves (mark covered) or rejects (reopen) a pending shift
@@ -147,6 +178,7 @@ module.exports = {
     listPendingClaims,
     postShiftsService,
     withdrawShiftsService,
+    claimShift,
     processShiftClaim,
 };
     

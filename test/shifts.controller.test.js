@@ -4,6 +4,7 @@ const assert = require('node:assert/strict');
 const {
     buildListPendingClaimsController,
     buildProcessShiftClaimController,
+    buildClaimShiftController,
 } = require('../controllers/shifts.controller');
 
 function createResponse() {
@@ -130,6 +131,80 @@ test('processShiftClaim surfaces a validation error from the service with its ow
     assert.equal(res.statusCode, 400);
     assert.deepEqual(res.body, {
         error: "Invalid action. Must be 'approve' or 'reject'.",
+    });
+});
+
+test('claimShift lets an authenticated employee claim an open shift', async () => {
+    const updatedShift = { _id: 'shift-1', status: 'pending', claimed_by: 'employee-1' };
+    const controller = buildClaimShiftController({
+        claimShift: async (shiftId, employeeId) => {
+            assert.equal(shiftId, 'shift-1');
+            assert.equal(employeeId, 'employee-1');
+            return updatedShift;
+        },
+    });
+    const res = createResponse();
+
+    await controller({
+        user: { id: 'employee-1', role: 'employee' },
+        params: { id: 'shift-1' },
+    }, res);
+
+    assert.equal(res.statusCode, 200);
+    assert.deepEqual(res.body, { shift: updatedShift });
+});
+
+test('claimShift rejects a request without an authenticated user', async () => {
+    const controller = buildClaimShiftController({
+        claimShift: async () => {
+            throw new Error('Service should not run');
+        },
+    });
+    const res = createResponse();
+
+    await controller({ params: { id: 'shift-1' } }, res);
+
+    assert.equal(res.statusCode, 401);
+    assert.deepEqual(res.body, {
+        error: 'An authenticated employee is required',
+    });
+});
+
+test('claimShift surfaces a not-found error from the service with its own status code', async () => {
+    const controller = buildClaimShiftController({
+        claimShift: async () => {
+            const error = new Error('Open shift not found.');
+            error.statusCode = 404;
+            throw error;
+        },
+    });
+    const res = createResponse();
+
+    await controller({
+        user: { id: 'employee-1', role: 'employee' },
+        params: { id: 'shift-1' },
+    }, res);
+
+    assert.equal(res.statusCode, 404);
+    assert.deepEqual(res.body, { error: 'Open shift not found.' });
+});
+
+test('claimShift does not expose unexpected errors', async () => {
+    const controller = buildClaimShiftController({
+        claimShift: async () => {
+            throw new Error('database details');
+        },
+    });
+    const res = createResponse();
+
+    await controller({
+        user: { id: 'employee-1', role: 'employee' },
+        params: { id: 'shift-1' },
+    }, res);
+
+    assert.equal(res.statusCode, 500);
+    assert.deepEqual(res.body, {
+        error: 'Unable to claim shift',
     });
 });
 

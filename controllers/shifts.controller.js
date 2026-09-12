@@ -126,12 +126,44 @@ function buildProcessShiftClaimController(service = shiftsService) {
 
 const processShiftClaim = buildProcessShiftClaimController();
 
+// POST /shifts/:id/claim — employee claims an open shift (FR-13 / FR-14).
+function buildClaimShiftController(service = shiftsService) {
+    return async function claimShift(req, res) {
+        try {
+            const employeeId = req.user?.id || req.user?._id;
+            const { id } = req.params;
+
+            if (!employeeId) {
+                return res.status(401).json({
+                    error: 'An authenticated employee is required',
+                });
+            }
+
+            const shift = await service.claimShift(id, employeeId);
+
+            return res.status(200).json({ shift });
+        } catch (error) {
+            const statusCode = error.statusCode || 500;
+
+            return res.status(statusCode).json({
+                error: statusCode === 500
+                    ? 'Unable to claim shift'
+                    : error.message,
+            });
+        }
+    };
+}
+
+const claimShift = buildClaimShiftController();
+
 module.exports = {
     getOpenShiftsController,
     buildListPendingClaimsController,
     listPendingClaims,
     buildProcessShiftClaimController,
     processShiftClaim,
+    buildClaimShiftController,
+    claimShift,
     postShiftsController,
     withdrawShiftsController
 };

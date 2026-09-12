@@ -1,7 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
-const { listPendingClaims, processShiftClaim } = require('../services/shifts.service');
+const { listPendingClaims, processShiftClaim, claimShift } = require('../services/shifts.service');
 
 function createShiftQuery(result, captured) {
     return {
@@ -155,6 +155,42 @@ test('processShiftClaim reject reopens the shift and clears the claim', async ()
     assert.equal(result.status, 'open');
     assert.equal(result.claimed_by, null);
     assert.equal(result.saved, true);
+});
+
+test('claimShift requires an authenticated employee', async () => {
+    await assert.rejects(
+        () => claimShift('shift-1', undefined),
+        (error) => error.statusCode === 401,
+    );
+});
+
+test('claimShift 404s when the shift is not open', async () => {
+    await assert.rejects(
+        () => claimShift('shift-1', 'employee-1', {
+            ShiftModel: { findOneAndUpdate: async () => null },
+        }),
+        (error) => error.statusCode === 404,
+    );
+});
+
+test('claimShift marks an open shift as pending and assigns the claimant', async () => {
+    const updatedShift = { _id: 'shift-1', status: 'pending', claimed_by: 'employee-1' };
+    let capturedFilter;
+    let capturedUpdate;
+
+    const shift = await claimShift('shift-1', 'employee-1', {
+        ShiftModel: {
+            findOneAndUpdate: async (filter, update) => {
+                capturedFilter = filter;
+                capturedUpdate = update;
+                return updatedShift;
+            },
+        },
+    });
+
+    assert.deepEqual(capturedFilter, { _id: 'shift-1', status: 'open' });
+    assert.deepEqual(capturedUpdate, { claimed_by: 'employee-1', status: 'pending' });
+    assert.deepEqual(shift, updatedShift);
 });
 
 test('processShiftClaim scopes the shift lookup to the manager\'s own workplace', async () => {
