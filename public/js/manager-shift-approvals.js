@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (user) renderSidebar(user);
 
   document.getElementById('logoutLink').addEventListener('click', handleLogout);
+  document.getElementById('claimsList').addEventListener('click', handleActionClick);
 
   loadPendingClaims();
 });
@@ -118,10 +119,10 @@ function claimCardHtml(claim) {
       ` : ''}
 
       <div class="msa-actions">
-        <button class="msa-reject" disabled title="Approving/rejecting shift covers isn't built yet (see Trello)">
+        <button class="msa-reject" data-shift-id="${claim._id}" data-action="reject">
           <span class="material-icons">close</span> Reject
         </button>
-        <button class="msa-approve" disabled title="Approving/rejecting shift covers isn't built yet (see Trello)">
+        <button class="msa-approve" data-shift-id="${claim._id}" data-action="approve">
           <span class="material-icons">check</span> Approve Cover
         </button>
       </div>
@@ -161,4 +162,55 @@ async function handleLogout(e) {
   localStorage.removeItem('rosterup_token');
   localStorage.removeItem('rosterup_user');
   window.location.href = 'sign-in.html';
+}
+
+async function handleActionClick(e) {
+  const btn = e.target.closest('button[data-action]');
+  if (!btn || btn.disabled) return;
+
+  const shiftId = btn.dataset.shiftId;
+  const action = btn.dataset.action;
+  const card = btn.closest('.msa-card');
+  const token = localStorage.getItem('rosterup_token');
+
+  const buttons = card.querySelectorAll('button[data-action]');
+  buttons.forEach(b => { b.disabled = true; });
+  btn.innerHTML = action === 'approve'
+    ? '<span class="material-icons">check</span> Approving…'
+    : '<span class="material-icons">close</span> Rejecting…';
+
+  try {
+    const response = await fetch(`/api/shifts/${shiftId}/claim`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({ action })
+    });
+
+    if (response.status === 401) {
+      localStorage.removeItem('rosterup_token');
+      localStorage.removeItem('rosterup_user');
+      window.location.href = 'sign-in.html';
+      return;
+    }
+
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      buttons.forEach(b => { b.disabled = false; });
+      btn.title = data.error || 'Could not process this claim.';
+      loadPendingClaims();
+      return;
+    }
+
+    // Either way the card no longer belongs in the pending list — approved
+    // shifts are covered, rejected ones go back to Open Shifts — so just
+    // refresh instead of trying to patch this one card in place.
+    loadPendingClaims();
+  } catch (err) {
+    console.error(`Failed to ${action} shift claim:`, err);
+    buttons.forEach(b => { b.disabled = false; });
+    btn.title = 'Connection error — please try again.';
+  }
 }

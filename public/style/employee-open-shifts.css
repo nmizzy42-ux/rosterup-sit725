@@ -117,13 +117,25 @@
 }
 
 .eos-claim-btn {
-  background: var(--color-muted);
-  color: #9CA3AF;
+  background: var(--color-primary);
+  color: #fff;
   border: none;
   border-radius: var(--radius);
   padding: 0.4rem 0.9rem;
   font-size: 0.75rem;
   font-weight: 600;
-  cursor: not-allowed;
+  cursor: pointer;
   flex-shrink: 0;
+  transition: opacity 0.15s ease;
+}
+.eos-claim-btn:hover:not(:disabled) {
+  opacity: 0.9;
+}
+.eos-claim-btn:disabled {
+  background: var(--color-muted);
+  color: #9CA3AF;
+  cursor: not-allowed;
+}
+.eos-card--claimed {
+  opacity: 0.6;
 }

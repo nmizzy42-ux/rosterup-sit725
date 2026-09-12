@@ -11,6 +11,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('logoutLink').addEventListener('click', handleLogout);
 
+  document.getElementById('shiftList').addEventListener('click', handleClaimClick);
+
   loadOpenShifts();
 });
 
@@ -102,7 +104,7 @@ function shiftCardHtml(shift) {
         </div>
         <div class="eos-footer">
           <p>Available to claim</p>
-          <button class="eos-claim-btn" disabled title="Claiming shifts isn't built yet (see Trello)">Claim Shift</button>
+          <button class="eos-claim-btn" data-shift-id="${shift._id}">Claim Shift</button>
         </div>
       </div>
     </div>
@@ -136,4 +138,51 @@ async function handleLogout(e) {
   localStorage.removeItem('rosterup_token');
   localStorage.removeItem('rosterup_user');
   window.location.href = 'sign-in.html';
+}
+
+async function handleClaimClick(e) {
+  const btn = e.target.closest('.eos-claim-btn');
+  if (!btn || btn.disabled) return;
+
+  const shiftId = btn.dataset.shiftId;
+  const card = btn.closest('.eos-card');
+  const token = localStorage.getItem('rosterup_token');
+
+  btn.disabled = true;
+  btn.textContent = 'Claiming…';
+
+  try {
+    const response = await fetch(`/api/shifts/${shiftId}/claim`, {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : {}
+    });
+
+    if (response.status === 401) {
+      localStorage.removeItem('rosterup_token');
+      localStorage.removeItem('rosterup_user');
+      window.location.href = 'sign-in.html';
+      return;
+    }
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      // Most likely someone else claimed it a moment ago (404) — refresh
+      // the list so the card reflects reality instead of leaving a stale
+      // "Claim Shift" button the user would just get the same error from.
+      btn.textContent = 'Unavailable';
+      btn.title = data.error || 'This shift is no longer available.';
+      setTimeout(loadOpenShifts, 1200);
+      return;
+    }
+
+    btn.textContent = 'Claimed ✓';
+    card.classList.add('eos-card--claimed');
+    setTimeout(loadOpenShifts, 900);
+  } catch (err) {
+    console.error('Failed to claim shift:', err);
+    btn.disabled = false;
+    btn.textContent = 'Claim Shift';
+    btn.title = 'Connection error — please try again.';
+  }
 }

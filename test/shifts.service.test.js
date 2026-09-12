@@ -1,7 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
-const { listPendingClaims, processShiftClaim, claimShift } = require('../services/shifts.service');
+const { listPendingClaims, processShiftClaim, claimShift, postShiftsService, withdrawShiftsService } = require('../services/shifts.service');
 
 function createShiftQuery(result, captured) {
     return {
@@ -191,6 +191,88 @@ test('claimShift marks an open shift as pending and assigns the claimant', async
     assert.deepEqual(capturedFilter, { _id: 'shift-1', status: 'open' });
     assert.deepEqual(capturedUpdate, { claimed_by: 'employee-1', status: 'pending' });
     assert.deepEqual(shift, updatedShift);
+});
+
+
+test('postShiftsService requires an authenticated user', async () => {
+    await assert.rejects(
+        () => postShiftsService({ shift_date: '2026-01-01', start_time: '09:00', end_time: '17:00', shift_role: 'Barista' }, undefined),
+        (error) => error.statusCode === 401,
+    );
+});
+
+test('postShiftsService rejects an unexpected field', async () => {
+    await assert.rejects(
+        () => postShiftsService({ workplace: 'workplace-1', shift_role: 'Barista' }, 'employee-1'),
+        (error) => /Invalid create field: workplace/.test(error.message),
+    );
+});
+
+test('postShiftsService rejects a user with no active workplace', async () => {
+    await assert.rejects(
+        () => postShiftsService({ shift_role: 'Barista' }, 'employee-1', {
+            UserModel: { findById: async () => ({ id: 'employee-1', role: 'employee', workplace_status: 'pending', workplace: null }) },
+            resolveUserWorkplaceId: async () => null,
+        }),
+        (error) => error.statusCode === 400,
+    );
+});
+
+test('postShiftsService resolves the workplace and poster server-side rather than trusting the request body', async () => {
+    const fakeUser = { id: 'employee-1', role: 'employee', workplace_status: 'approved', workplace: 'workplace-1' };
+    let created;
+
+    const shift = await postShiftsService(
+        { shift_date: '2026-01-01', start_time: '09:00', end_time: '17:00', shift_role: 'Barista', note: 'Cover please' },
+        'employee-1',
+        {
+            UserModel: { findById: async (id) => { assert.equal(id, 'employee-1'); return fakeUser; } },
+            resolveUserWorkplaceId: async (user) => { assert.equal(user, fakeUser); return 'workplace-1'; },
+            ShiftModel: { create: async (obj) => { created = obj; return { _id: 'shift-new', ...obj }; } },
+        }
+    );
+
+    assert.deepEqual(created, {
+        workplace: 'workplace-1',
+        posted_by: 'employee-1',
+        shift_date: '2026-01-01',
+        start_time: '09:00',
+        end_time: '17:00',
+        shift_role: 'Barista',
+        note: 'Cover please',
+    });
+    assert.equal(shift._id, 'shift-new');
+});
+
+test('withdrawShiftsService requires an authenticated user', async () => {
+    await assert.rejects(
+        () => withdrawShiftsService('shift-1', undefined),
+        (error) => error.statusCode === 401,
+    );
+});
+
+test('withdrawShiftsService only withdraws a shift claimed by this user', async () => {
+    let capturedFilter;
+
+    await withdrawShiftsService('shift-1', 'employee-1', {
+        ShiftModel: {
+            findOneAndUpdate: async (filter, update) => {
+                capturedFilter = filter;
+                assert.deepEqual(update, { claimed_by: null, status: 'open' });
+                return { _id: 'shift-1', status: 'open', claimed_by: null };
+            },
+        },
+    });
+
+    assert.deepEqual(capturedFilter, { _id: 'shift-1', claimed_by: 'employee-1', status: 'pending' });
+});
+
+test('withdrawShiftsService returns null when the shift was not claimed by this user', async () => {
+    const shift = await withdrawShiftsService('shift-1', 'employee-1', {
+        ShiftModel: { findOneAndUpdate: async () => null },
+    });
+
+    assert.equal(shift, null);
 });
 
 test('processShiftClaim scopes the shift lookup to the manager\'s own workplace', async () => {

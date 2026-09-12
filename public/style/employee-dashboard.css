@@ -203,6 +203,17 @@
   border: 1px solid var(--color-border);
   border-radius: 1rem;
   padding: 1.25rem;
+  display: block;
+}
+.emp-stat-card--link {
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+.emp-stat-card--link:hover {
+  border-color: var(--color-primary);
+  transform: translateY(-1px);
 }
 
 .emp-stat-icon {

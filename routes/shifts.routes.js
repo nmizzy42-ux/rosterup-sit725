@@ -11,7 +11,7 @@ function notImplemented(req, res) {
 }
 
 // Create / Post a shift for cover
-router.post('/', postShiftsController);
+router.post('/', requireAuth, postShiftsController);
 
 // Get Shifts
 router.get('/', getOpenShiftsController);
@@ -23,7 +23,7 @@ router.get('/', getOpenShiftsController);
 // manager.routes.js pattern this mirrors.)
 router.get('/claims', requireAuth, requireRole('manager'), listPendingClaims);
 // Employee who claimed shift withdraws claim
-router.put('/withdraw', withdrawShiftsController);
+router.put('/withdraw', requireAuth, withdrawShiftsController);
 
 // Get Shift by ID
 router.get('/:id', notImplemented);

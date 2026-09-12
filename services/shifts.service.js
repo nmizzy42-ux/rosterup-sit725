@@ -1,5 +1,7 @@
 const Shift = require('../models/Shift');
 const Workplace = require('../models/Workplace');
+const User = require('../models/User');
+const { resolveUserWorkplaceId } = require('./chat-room.service');
 
 function createHttpError(message, statusCode) {
     const error = new Error(message);
@@ -7,11 +9,17 @@ function createHttpError(message, statusCode) {
     return error;
 };
 
-async function postShiftsService(shift) {
+// Employee (or manager) posts one of their own shifts for cover — FR-15.
+// workplace and posted_by are always resolved server-side from the
+// authenticated user rather than trusted from the request body — the old
+// version accepted both directly from the client, which would have let
+// anyone post a shift into any workplace under anyone else's name.
+async function postShiftsService(shiftInput, userId, dependencies = {}) {
+    if (!userId) {
+        throw createHttpError('An authenticated user is required', 401);
+    }
 
     const allowedFields = [
-        'workplace',
-        'posted_by',
         'shift_date',
         'start_time',
         'end_time',
@@ -19,30 +27,54 @@ async function postShiftsService(shift) {
         'note'
     ];
 
-    for (const field in shift) {
+    for (const field in shiftInput) {
         if (!allowedFields.includes(field)) {
             throw new Error(`Invalid create field: ${field}`);
         }
     }
 
+    const ShiftModel = dependencies.ShiftModel || Shift;
+    const UserModel = dependencies.UserModel || User;
+    const resolveWorkplaceId = dependencies.resolveUserWorkplaceId || resolveUserWorkplaceId;
+
+    const user = await UserModel.findById(userId);
+    const workplaceId = user && await resolveWorkplaceId(user, dependencies);
+
+    if (!workplaceId) {
+        throw createHttpError('You must belong to an active workplace to post a shift.', 400);
+    }
+
     const shiftObject = {
-        workplace: shift.workplace,
-        posted_by: shift.posted_by,
-        shift_date: shift.shift_date,
-        start_time: shift.start_time,
-        end_time: shift.end_time,
-        shift_role: shift.shift_role,
-        note: shift.note
+        workplace: workplaceId,
+        posted_by: userId,
+        shift_date: shiftInput.shift_date,
+        start_time: shiftInput.start_time,
+        end_time: shiftInput.end_time,
+        shift_role: shiftInput.shift_role,
+        note: shiftInput.note
     };
 
-    return await shiftsModel.create(shiftObject);
+    return await ShiftModel.create(shiftObject);
+}
 
-};
 
+// Employee withdraws a claim they made on a shift — FR-13's undo path. Only
+// the employee who actually claimed the shift can withdraw it (scoped by
+// claimed_by in the filter, same atomic-update trick as claimShift), so one
+// employee can't reopen a shift someone else claimed.
+async function withdrawShiftsService(shiftId, userId, dependencies = {}) {
+    if (!userId) {
+        throw createHttpError('An authenticated user is required', 401);
+    }
 
-async function withdrawShiftsService(filter) {
-    const shift = await shiftsModel.findOneAndUpdate(
-        filter,
+    const ShiftModel = dependencies.ShiftModel || Shift;
+
+    const shift = await ShiftModel.findOneAndUpdate(
+        {
+            _id: shiftId,
+            claimed_by: userId,
+            status: 'pending',
+        },
         {
             claimed_by: null,
             status: 'open'

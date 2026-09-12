@@ -27,9 +27,9 @@
         <a href="employee-open-shifts.html" class="emp-nav-item">
           <span class="material-icons">list</span> Open Shifts
         </a>
-        <span class="emp-nav-item emp-nav-item--disabled" title="Not built yet">
+        <a href="employee-my-shifts.html" class="emp-nav-item">
           <span class="material-icons">calendar_today</span> My Shifts
-        </span>
+        </a>
         <span class="emp-nav-item emp-nav-item--disabled" title="Not built yet">
           <span class="material-icons">history</span> Shift History
         </span>
@@ -73,28 +73,28 @@
       </div>
 
       <div class="emp-stats-grid">
-        <div class="emp-stat-card">
+        <a href="employee-my-shifts.html" class="emp-stat-card emp-stat-card--link">
           <div class="emp-stat-icon" style="background:#DCEAF7;">
             <span class="material-icons" style="color:#2B6CB0;">calendar_today</span>
           </div>
           <p class="emp-stat-value">—</p>
           <p class="emp-stat-label">Upcoming Shifts</p>
-        </div>
-        <div class="emp-stat-card">
+        </a>
+        <a href="employee-open-shifts.html" class="emp-stat-card emp-stat-card--link">
           <div class="emp-stat-icon" style="background:#E8E2F4;">
             <span class="material-icons" style="color:#8D7AB8;">list</span>
           </div>
           <p class="emp-stat-value" id="statOpenShifts">—</p>
           <p class="emp-stat-label">Open Shifts</p>
-        </div>
-        <div class="emp-stat-card">
+        </a>
+        <a href="employee-my-shifts.html" class="emp-stat-card emp-stat-card--link">
           <div class="emp-stat-icon" style="background:#FEF9C3;">
             <span class="material-icons" style="color:#92400E;">error_outline</span>
           </div>
           <p class="emp-stat-value">—</p>
           <p class="emp-stat-label">Pending Requests</p>
-        </div>
-        <div class="emp-stat-card">
+        </a>
+        <div class="emp-stat-card" title="Shift history isn't built yet (see Trello)">
           <div class="emp-stat-icon" style="background:#DDF2E7;">
             <span class="material-icons" style="color:#166534;">check_circle</span>
           </div>
@@ -107,9 +107,10 @@
         <div>
           <div class="emp-panel-header">
             <h2>Upcoming Shifts</h2>
+            <a href="employee-my-shifts.html">View all</a>
           </div>
           <div class="emp-shift-list">
-            <div class="emp-empty-card"><p>Shift scheduling isn't built yet (see Trello).</p></div>
+            <div class="emp-empty-card"><p>Full shift scheduling isn't built yet — check My Shifts for what you've claimed so far.</p></div>
           </div>
         </div>
 

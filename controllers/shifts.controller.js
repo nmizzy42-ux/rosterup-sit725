@@ -2,23 +2,38 @@ const shiftsService = require('../services/shifts.service');
 
 const postShiftsController = async (req, res) => {
     try {
+        const employeeId = req.user?.id || req.user?._id;
+
+        if (!employeeId) {
+            return res.status(401).json({ message: 'Authentication required.' });
+        }
+
         const shiftBody = req.body;
 
-        const postedShift = await shiftsService.postShiftsService(shiftBody);
+        const postedShift = await shiftsService.postShiftsService(shiftBody, employeeId);
 
         res.status(200).json(postedShift);
     } catch (error) {
+        const statusCode = error.statusCode || 500;
+
         if (error.name == "ValidationError") {
             res.status(500).json({message: `Data inputted incorrectly. Please check the ${Object.keys(error.errors).join(", ")} fields and ensure they are inputted correctly.`})
+        } else if (statusCode !== 500) {
+            res.status(statusCode).json({ message: error.message });
         } else {
             res.status(500).json({ message: error.message, error: error });
         }
-        
     }
 };
 
 const withdrawShiftsController = async (req, res) => {
     try {
+        const employeeId = req.user?.id || req.user?._id;
+
+        if (!employeeId) {
+            return res.status(401).json({ message: 'Authentication required.' });
+        }
+
         const { shiftId } = req.query;
 
         if (!shiftId) {
@@ -27,20 +42,19 @@ const withdrawShiftsController = async (req, res) => {
             });
         }
 
-        const filter = {_id: shiftId};
-
-        const withdrawnShift = await shiftsService.withdrawShiftsService(filter);
+        const withdrawnShift = await shiftsService.withdrawShiftsService(shiftId, employeeId);
 
         if (!withdrawnShift) {
             return res.status(404).json({
-                message: 'Shift not found'
+                message: 'Shift not found, or it is not a pending claim of yours'
             });
         }
 
         return res.status(200).json(withdrawnShift);
 
     } catch (error) {
-        return res.status(500).json({
+        const statusCode = error.statusCode || 500;
+        return res.status(statusCode).json({
             message: error.message
         });
     }
@@ -48,12 +62,13 @@ const withdrawShiftsController = async (req, res) => {
 
 const getOpenShiftsController = async (req, res) => {
     try {
-        const { workplace } = req.query;
+        const { workplace, status, claimed_by } = req.query;
 
         const filter = {};
 
         if (workplace) filter.workplace = workplace;
-        filter.status = "open";
+        if (claimed_by) filter.claimed_by = claimed_by;
+        filter.status = status || "open";
 
         const shifts = await shiftsService.getShiftsService(filter);
 
