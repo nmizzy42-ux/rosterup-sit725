@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getOpenShiftsController, listPendingClaims, postShiftsController, withdrawShiftsController } = require('../controllers/shifts.controller');
+const { getOpenShiftsController, listPendingClaims, processShiftClaim, postShiftsController, withdrawShiftsController } = require('../controllers/shifts.controller');
 const { requireAuth, requireRole } = require('../middleware/auth.middleware');
 
 
@@ -35,7 +35,10 @@ router.put('/:id', notImplemented);
 router.post('/:id/claim', notImplemented);
 
 // Manager Approves / Rejects Employee Shift Claim
-router.put('/:id/claim', notImplemented);
+// (The Trello card describes this as a PATCH endpoint, but this route was
+// already scaffolded here as PUT before the card was picked up — kept PUT
+// rather than adding a second route for the same action.)
+router.put('/:id/claim', requireAuth, requireRole('manager'), processShiftClaim);
 
 // Original Employee Withdraws Shift
 router.post('/:id/withdraw', notImplemented);

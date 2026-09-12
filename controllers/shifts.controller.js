@@ -101,10 +101,37 @@ function buildListPendingClaimsController(service = shiftsService) {
 
 const listPendingClaims = buildListPendingClaimsController();
 
+// PUT /shifts/:id/claim — manager approves or rejects a pending claim.
+function buildProcessShiftClaimController(service = shiftsService) {
+    return async function processShiftClaim(req, res) {
+        try {
+            const managerId = req.user?.id || req.user?._id;
+            const { id } = req.params;
+            const { action } = req.body || {};
+
+            const shift = await service.processShiftClaim(id, managerId, action);
+
+            return res.status(200).json({ shift });
+        } catch (error) {
+            const statusCode = error.statusCode || 500;
+
+            return res.status(statusCode).json({
+                error: statusCode === 500
+                    ? 'Unable to process shift claim'
+                    : error.message,
+            });
+        }
+    };
+}
+
+const processShiftClaim = buildProcessShiftClaimController();
+
 module.exports = {
     getOpenShiftsController,
     buildListPendingClaimsController,
     listPendingClaims,
+    buildProcessShiftClaimController,
+    processShiftClaim,
     postShiftsController,
     withdrawShiftsController
 };
