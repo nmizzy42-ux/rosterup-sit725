@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const {
+    buildGetOpenShiftsController,
     buildListPendingClaimsController,
     buildProcessShiftClaimController,
     buildClaimShiftController,
@@ -21,6 +22,47 @@ function createResponse() {
         },
     };
 }
+
+test('gets shifts for the authenticated user without trusting a workplace query', async () => {
+    const expectedShifts = [{ _id: 'shift-1' }];
+    const controller = buildGetOpenShiftsController({
+        getShiftsService: async (filter, userId) => {
+            assert.equal(userId, 'employee-1');
+            assert.deepEqual(filter, {
+                status: 'open',
+                claimed_by: 'employee-1',
+            });
+            return expectedShifts;
+        },
+    });
+    const res = createResponse();
+
+    await controller({
+        user: { id: 'employee-1', role: 'employee' },
+        query: {
+            workplace: 'another-workplace',
+            status: 'open',
+            claimed_by: 'employee-1',
+        },
+    }, res);
+
+    assert.equal(res.statusCode, 200);
+    assert.deepEqual(res.body, expectedShifts);
+});
+
+test('rejects loading shifts without an authenticated user', async () => {
+    const controller = buildGetOpenShiftsController({
+        getShiftsService: async () => {
+            throw new Error('Service should not run');
+        },
+    });
+    const res = createResponse();
+
+    await controller({ query: {} }, res);
+
+    assert.equal(res.statusCode, 401);
+    assert.deepEqual(res.body, { message: 'Authentication required.' });
+});
 
 test('returns pending claims to an authenticated manager', async () => {
     const expectedClaims = [{ _id: 'shift-1' }];

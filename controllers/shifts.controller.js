@@ -60,27 +60,32 @@ const withdrawShiftsController = async (req, res) => {
     }
 };
 
-const getOpenShiftsController = async (req, res) => {
-    try {
-        const { workplace, status, claimed_by } = req.query;
+function buildGetOpenShiftsController(service = shiftsService) {
+    return async function getOpenShifts(req, res) {
+        try {
+            const userId = req.user?.id || req.user?._id;
 
-        const filter = {};
+            if (!userId) {
+                return res.status(401).json({ message: 'Authentication required.' });
+            }
 
-        if (workplace) filter.workplace = workplace;
-        if (claimed_by) filter.claimed_by = claimed_by;
-        filter.status = status || "open";
+            const { status, claimed_by } = req.query || {};
+            const filter = { status: status || 'open' };
 
-        const shifts = await shiftsService.getShiftsService(filter);
+            if (claimed_by) filter.claimed_by = claimed_by;
 
-        res.status(200).json(shifts);
-    } catch (error) {
-        if (error.name == "CastError") {
-            res.status(500).json({ message: `Unable to cast value from ${error.valueType} to ${error.kind}` })
-        } else {
-            res.status(500).json({ message: error.message, error: error });
+            const shifts = await service.getShiftsService(filter, userId);
+
+            return res.status(200).json(shifts);
+        } catch (error) {
+            const statusCode = error.statusCode || 500;
+
+            return res.status(statusCode).json({ message: error.message });
         }
-    }
-};
+    };
+}
+
+const getOpenShiftsController = buildGetOpenShiftsController();
 
 function buildListPendingClaimsController(service = shiftsService) {
     return async function listPendingClaims(req, res) {
@@ -172,6 +177,7 @@ function buildClaimShiftController(service = shiftsService) {
 const claimShift = buildClaimShiftController();
 
 module.exports = {
+    buildGetOpenShiftsController,
     getOpenShiftsController,
     buildListPendingClaimsController,
     listPendingClaims,
