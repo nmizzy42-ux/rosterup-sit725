@@ -23,7 +23,40 @@ document.addEventListener('DOMContentLoaded', () => {
   checkWorkplace();
   loadPendingEmployees();
   loadPendingClaims();
+  loadWorkplaceSummary();
 });
+
+async function loadWorkplaceSummary() {
+  const employeesStat = document.getElementById('statActiveEmployees');
+  const shiftsStat = document.getElementById('statOpenShifts');
+  const token = localStorage.getItem('rosterup_token');
+
+  try {
+    const [employeesResponse, shiftsResponse] = await Promise.all([
+      fetch('/api/manager/employees', {
+        headers: { Authorization: `Bearer ${token}` }
+      }),
+      fetch('/api/manager/shifts', {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+    ]);
+
+    const employeesData = await employeesResponse.json();
+    const shiftsData = await shiftsResponse.json();
+
+    if (employeesResponse.ok && employeesData.success) {
+      employeesStat.textContent = employeesData.employees.filter(
+        employee => employee.workplace_status === 'approved'
+      ).length;
+    }
+
+    if (shiftsResponse.ok && shiftsData.success) {
+      shiftsStat.textContent = shiftsData.shifts.filter(shift => shift.status === 'open').length;
+    }
+  } catch (error) {
+    console.error('Failed to load workplace summary:', error);
+  }
+}
 
 // Signing in already redirects a workplace-less manager to
 // manager-workplace-setup.html, but a manager can still land here directly
@@ -260,6 +293,7 @@ async function processEmployee(userId, action) {
       messageBox.textContent = `Successfully ${action}d ${data.employeeName}.`;
       messageBox.className = 'alert-box alert-success';
       loadPendingEmployees();
+      loadWorkplaceSummary();
     } else {
       messageBox.textContent = data.message || 'Could not process this request.';
       messageBox.className = 'alert-box alert-error';

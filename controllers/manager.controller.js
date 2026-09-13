@@ -1,5 +1,56 @@
 const User = require('../models/User');
 const Workplace = require('../models/Workplace');
+const usersService = require('../services/users.service');
+const shiftsService = require('../services/shifts.service');
+
+function buildGetManagerEmployeesController(service = usersService) {
+    return async function getManagerEmployees(req, res) {
+        try {
+            const managerId = req.user?.id || req.user?._id;
+            const employees = await service.getWorkplaceEmployeesService(managerId);
+
+            return res.status(200).json({
+                success: true,
+                count: employees.length,
+                employees,
+            });
+        } catch (error) {
+            const statusCode = error.statusCode || 500;
+
+            return res.status(statusCode).json({
+                success: false,
+                message: error.message,
+            });
+        }
+    };
+}
+
+function buildGetManagerShiftsController(service = shiftsService) {
+    return async function getManagerShifts(req, res) {
+        try {
+            const managerId = req.user?.id || req.user?._id;
+            const shifts = await service.getShiftsService({}, managerId);
+
+            return res.status(200).json({
+                success: true,
+                count: shifts.length,
+                shifts,
+            });
+        } catch (error) {
+            const statusCode = error.statusCode || 500;
+
+            return res.status(statusCode).json({
+                success: false,
+                message: error.message,
+            });
+        }
+    };
+}
+
+exports.buildGetManagerEmployeesController = buildGetManagerEmployeesController;
+exports.buildGetManagerShiftsController = buildGetManagerShiftsController;
+exports.getManagerEmployees = buildGetManagerEmployeesController();
+exports.getManagerShifts = buildGetManagerShiftsController();
 
 //GET /api/manager/pending-employees
 //(This used to return every pending employee for every manager, with no

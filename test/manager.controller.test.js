@@ -49,3 +49,44 @@ test('processEmployeeRequest rejects an invalid action', async () => {
     assert.equal(response.statusCode, 400);
     assert.equal(response.body.success, false);
 });
+
+test('getManagerEmployees returns employees from the manager workplace', async () => {
+    const response = createResponseRecorder();
+    const expectedEmployees = [{ _id: 'employee-1' }];
+    const controller = managerController.buildGetManagerEmployeesController({
+        getWorkplaceEmployeesService: async (managerId) => {
+            assert.equal(managerId, 'manager-1');
+            return expectedEmployees;
+        },
+    });
+
+    await controller({ user: { id: 'manager-1' } }, response);
+
+    assert.equal(response.statusCode, 200);
+    assert.deepEqual(response.body, {
+        success: true,
+        count: 1,
+        employees: expectedEmployees,
+    });
+});
+
+test('getManagerShifts returns shifts from the manager workplace', async () => {
+    const response = createResponseRecorder();
+    const expectedShifts = [{ _id: 'shift-1' }];
+    const controller = managerController.buildGetManagerShiftsController({
+        getShiftsService: async (filter, managerId) => {
+            assert.deepEqual(filter, {});
+            assert.equal(managerId, 'manager-1');
+            return expectedShifts;
+        },
+    });
+
+    await controller({ user: { id: 'manager-1' } }, response);
+
+    assert.equal(response.statusCode, 200);
+    assert.deepEqual(response.body, {
+        success: true,
+        count: 1,
+        shifts: expectedShifts,
+    });
+});
