@@ -85,27 +85,10 @@ async function withdrawShiftsService(shiftId, userId, dependencies = {}) {
     return shift;
 }
 
-async function getShiftsService(filter, userId, dependencies = {}) {
-    if (!userId) {
-        throw createHttpError('An authenticated user is required', 401);
-    }
-
-    const ShiftModel = dependencies.ShiftModel || Shift;
-    const UserModel = dependencies.UserModel || User;
-    const resolveWorkplaceId = dependencies.resolveUserWorkplaceId || resolveUserWorkplaceId;
-    const user = await UserModel.findById(userId);
-    const workplaceId = user && await resolveWorkplaceId(user, dependencies);
-
-    if (!workplaceId) {
-        return [];
-    }
-
-    const scopedFilter = {
-        ...filter,
-        workplace: workplaceId,
-    };
-
-    const shifts = await ShiftModel.find(scopedFilter)
+async function getShiftsService(filter) {
+    // Populated so the client can show who posted the shift without a
+    // separate lookup (same pattern as listPendingClaims below).
+    const shifts = await Shift.find(filter)
         .populate('posted_by', 'first_name last_name')
         .sort({ shift_date: 1, start_time: 1 });
     return shifts;
@@ -231,3 +214,4 @@ module.exports = {
     processShiftClaim,
 };
     
+

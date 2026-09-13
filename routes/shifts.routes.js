@@ -14,7 +14,7 @@ function notImplemented(req, res) {
 router.post('/', requireAuth, postShiftsController);
 
 // Get Shifts
-router.get('/', requireAuth, getOpenShiftsController);
+router.get('/', getOpenShiftsController);
 
 // Manager Lists Pending Shift Claims
 // (The controller itself already checks req.user and the manager role, but

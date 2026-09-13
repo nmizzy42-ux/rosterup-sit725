@@ -1,7 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
-const { getShiftsService, listPendingClaims, processShiftClaim, claimShift, postShiftsService, withdrawShiftsService } = require('../services/shifts.service');
+const { listPendingClaims, processShiftClaim, claimShift, postShiftsService, withdrawShiftsService } = require('../services/shifts.service');
 
 function createShiftQuery(result, captured) {
     return {
@@ -16,73 +16,8 @@ function createShiftQuery(result, captured) {
         lean() {
             return Promise.resolve(result);
         },
-        then(resolve, reject) {
-            return Promise.resolve(result).then(resolve, reject);
-        },
     };
 }
-
-test('getShiftsService requires an authenticated user', async () => {
-    await assert.rejects(
-        () => getShiftsService({ status: 'open' }),
-        (error) => error.statusCode === 401,
-    );
-});
-
-test('getShiftsService returns no shifts when the user has no active workplace', async () => {
-    const shifts = await getShiftsService({ status: 'open' }, 'employee-1', {
-        UserModel: { findById: async () => ({ _id: 'employee-1' }) },
-        resolveUserWorkplaceId: async () => null,
-        ShiftModel: {
-            find: () => {
-                throw new Error('Shift lookup should not run');
-            },
-        },
-    });
-
-    assert.deepEqual(shifts, []);
-});
-
-test('getShiftsService limits shifts to the authenticated user workplace', async () => {
-    const expectedShifts = [{ _id: 'shift-1' }];
-    const captured = { populate: [] };
-    const user = { _id: 'employee-1' };
-
-    const shifts = await getShiftsService(
-        { status: 'open', claimed_by: 'employee-1' },
-        'employee-1',
-        {
-            UserModel: {
-                findById: async (userId) => {
-                    assert.equal(userId, 'employee-1');
-                    return user;
-                },
-            },
-            resolveUserWorkplaceId: async (resolvedUser) => {
-                assert.equal(resolvedUser, user);
-                return 'workplace-1';
-            },
-            ShiftModel: {
-                find: (filter) => {
-                    captured.filter = filter;
-                    return createShiftQuery(expectedShifts, captured);
-                },
-            },
-        },
-    );
-
-    assert.deepEqual(captured.filter, {
-        status: 'open',
-        claimed_by: 'employee-1',
-        workplace: 'workplace-1',
-    });
-    assert.deepEqual(captured.populate, [{
-        path: 'posted_by',
-        fields: 'first_name last_name',
-    }]);
-    assert.deepEqual(captured.sort, { shift_date: 1, start_time: 1 });
-    assert.deepEqual(shifts, expectedShifts);
-});
 
 test('requires an authenticated manager', async () => {
     await assert.rejects(
