@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 
 const {
     buildCreateWorkplaceController,
+    buildGetMyWorkplaceController,
 } = require('../controllers/workplaces.controller');
 
 function createResponseRecorder() {
@@ -59,4 +60,35 @@ test('create workplace controller returns expected validation errors', async () 
 
     assert.equal(response.statusCode, 400);
     assert.equal(response.body.error, 'Missing required workplace fields');
+});
+
+test('get my workplace controller returns the manager\'s workplace', async () => {
+    const service = {
+        async getWorkplaceByManagerId(managerId) {
+            assert.equal(managerId, 'manager-1');
+            return { _id: 'workplace-1', invite_code: 'RU-ABC234' };
+        },
+    };
+    const controller = buildGetMyWorkplaceController(service);
+    const response = createResponseRecorder();
+
+    await controller({ user: { id: 'manager-1' } }, response);
+
+    assert.equal(response.statusCode, 200);
+    assert.equal(response.body.workplace.invite_code, 'RU-ABC234');
+});
+
+test('get my workplace controller returns null when the manager has no workplace yet', async () => {
+    const service = {
+        async getWorkplaceByManagerId() {
+            return null;
+        },
+    };
+    const controller = buildGetMyWorkplaceController(service);
+    const response = createResponseRecorder();
+
+    await controller({ user: { id: 'manager-1' } }, response);
+
+    assert.equal(response.statusCode, 200);
+    assert.equal(response.body.workplace, null);
 });

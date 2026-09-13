@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const { createWorkplace } = require('../controllers/workplaces.controller');
+const { createWorkplace, getMyWorkplace } = require('../controllers/workplaces.controller');
+const { requireAuth, requireRole } = require('../middleware/auth.middleware');
 
 function notImplemented(req, res) {
     return res.status(501).json({
@@ -8,13 +9,23 @@ function notImplemented(req, res) {
     });
 }
 
-// Create workplace 
-router.post('/', createWorkplace);
+// Create workplace
+// (The controller reads req.user to attach the workplace to its manager —
+// without requireAuth here req.user was never set, so this unconditionally
+// 401'd regardless of token. Same class of bug already fixed on
+// shifts.routes.js's GET /claims.)
+router.post('/', requireAuth, requireRole('manager'), createWorkplace);
 
-// Get all workplaces 
+// Does the signed-in manager already have a workplace? Used by the
+// frontend to decide whether to send a manager to workplace setup after
+// login, or straight to their dashboard. Must be declared before GET /:id
+// so "mine" isn't swallowed as an :id value.
+router.get('/mine', requireAuth, requireRole('manager'), getMyWorkplace);
+
+// Get all workplaces
 router.get('/', notImplemented);
 
-// Get workplace details  
+// Get workplace details
 router.get('/:id', notImplemented);
 
 // Update workplace details 

@@ -9,8 +9,7 @@ const ShiftSchema = new mongoose.Schema({
     end_time: {type: String, required: true},
     shift_role: {type: String, required: true, trim: true, maxlength: 100},
     note: {type: String, trim: true, maxlength: 500},
-    status: {type: String, enum: ['open', 'pending', 'covered', 'cancelled'], default: 'open'},
-    claimed_by: {type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null}
+    status: {type: String, enum: ['open', 'pending', 'covered', 'cancelled'], default: 'open'}
 }, {
     timestamps: true,
     toJSON: {getters: true, virtuals: false},
