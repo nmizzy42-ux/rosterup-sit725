@@ -29,11 +29,6 @@ async function loadOpenShifts() {
   const token = localStorage.getItem('rosterup_token');
 
   try {
-    // Note: /api/shifts isn't scoped to the signed-in employee's own
-    // workplace — the cached profile doesn't currently carry a workplace id
-    // to filter by, so this shows every open shift in the system. That's
-    // fine for the current single-workplace demo data, but would need a
-    // workplace filter added once there's more than one workplace in play.
     const response = await fetch('/api/shifts', {
       headers: token ? { Authorization: `Bearer ${token}` } : {}
     });
