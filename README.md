@@ -6,18 +6,70 @@ get buried, employees can post an open shift and someone else can claim it.
 Managers can approve the change, and everyone knows who is working without
 scrolling through a hundred messages.
 
+## Run RosterUp locally
+
+You will need Node.js 20.19 or newer and Docker Desktop.
+
+1. Clone the repository and open the project.
+
+```bash
+git clone https://github.com/sahancz/rosterup-sit725.git
+cd rosterup-sit725
+git switch sprint2-integration
+```
+
+2. Install the project packages and create your local environment file.
+
+```bash
+npm install
+cp .env.example .env
+```
+
+3. Start MongoDB and add the demo data.
+
+```bash
+docker compose up -d
+npm run seed
+```
+
+4. Start the application.
+
+```bash
+node server.js
+```
+
+Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+Manager demo account
+
+```text
+john.smith@test.com
+Password123!
+```
+
+Employee demo account
+
+```text
+sarah.jones@test.com
+Password123!
+```
+
+Press `Control + C` to stop the application. Run `docker compose down` when
+you also want to stop MongoDB.
+
 ## Project status
 
-RosterUp is currently in Sprint 1, which means the plan is real, the team is
-building, and a few buttons may still be imaginary. It is not ready for a real
-workplace just yet.
+Sprint 1 is finished and RosterUp is now moving into Sprint 2. The main
+features are working, including registration, workplace setup, employee
+approvals, shift cover, manager approvals, chat and the manager workplace
+views.
 
-`main` is our protected and reviewed version of the project.
-`sprint1-integration` is where the completed Sprint 1 pieces come together for
-testing. Everyone works on a separate feature branch and opens a pull request
-before their work joins the rest of the application. The scaffold is still
-under construction, so the full app may not run until the remaining routes and
-screens are connected.
+`main` contains the completed Sprint 1 version. `sprint2-integration` is where
+the current Sprint 2 work comes together before it is reviewed and moved into
+`main`.
+
+Current work is tracked on the
+[RosterUp Trello board](https://trello.com/b/D2KuzpJt/rosterup-sprint-1-planning).
 
 Before starting development, have a quick look at
 [CONTRIBUTING.md](CONTRIBUTING.md). Before opening or merging a pull request,
@@ -106,51 +158,23 @@ separate modules so team members can work without unnecessary overlap.
 
 ## Technology
 
-- Node.js 18 or newer
+- Node.js 20.19 or newer
 - Express
-- MongoDB
+- MongoDB 7
 - Mongoose
 - HTML, CSS, and client-side JavaScript
-
-## Local development
-
-Clone the repository and switch to the active Sprint 1 integration branch:
-
-```bash
-git clone https://github.com/sahancz/rosterup-sit725.git
-cd rosterup-sit725
-git switch sprint1-integration
-npm install
-```
-
-Create your feature branch from the latest integration branch:
-
-```bash
-git pull --ff-only
-git switch -c feature/<trello-card>-<short-description>
-```
-
-Run the available tests before opening a pull request:
-
-```bash
-npm test
-```
-
-Database environment variables and the final start command will be documented
-when the database configuration card is completed. Never commit `.env` files,
-passwords, connection strings, or other secrets.
 
 ## Development workflow
 
 1. Claim a Trello card before beginning work.
 2. Confirm that the card maps to the approved SRS.
-3. Create a branch from `sprint1-integration`.
+3. Create a branch from `sprint2-integration`.
 4. Make focused commits under your own GitHub account.
 5. Test your change locally.
-6. Open a pull request into `sprint1-integration`.
+6. Open a pull request into `sprint2-integration`.
 7. Address review comments and conflicts.
 8. Merge only after approval.
-9. Merge the integration branch into `main` only when the complete Sprint 1
+9. Merge the integration branch into `main` only when the complete Sprint 2
    application has been reviewed and verified.
 
 Direct pushes, force pushes, and deletion of `main` are blocked.
@@ -166,3 +190,5 @@ Direct pushes, force pushes, and deletion of `main` are blocked.
 
 This student project is currently distributed under the ISC licence declared
 in `package.json`.
+
+Documentation updated by Sahan on 14th Sep.
