@@ -191,4 +191,34 @@ Direct pushes, force pushes, and deletion of `main` are blocked.
 This student project is currently distributed under the ISC licence declared
 in `package.json`.
 
-Documentation updated by Sahan on 14th Sep.
+## HD Docker: End-To-End Application Deployment Task: Run Application via Containerisation (Marker Evaluation Instructions)
+
+Follow these standalone instructions to build, execute, and verify this application stack end-to-end inside an isolated Docker container environment.
+
+### Prerequisites
+* Ensure Docker Desktop is installed and running on your host machine.
+* Ensure local instances of Node.js or MongoDB are stopped to prevent port conflicts (Port `3000` and `27017`).
+
+### Setup & Deployment Steps
+1. **Clone the Repository Fork:**
+   ```bash
+   git clone <YOUR_PUBLIC_GITHUB_REPOSITORY_URL>
+   cd rosterup-sit725
+   ```
+
+2. **Launch the Containerized Multi-Service Stack:**
+   ```bash
+   docker compose up --build -d
+   ```
+
+3. **Populate Demo Seed Data (Executes internally inside the live environment):**
+   ```bash
+   docker compose exec web node seeds/seed.js
+   ```
+
+### Verification Access Points
+* **Fully Functional App Context:** Access the web application via [http://localhost:3000](http://localhost:3000)
+* **Embedded Student Identification API Route:** Verify individual credentials at [http://localhost:3000/api/student](http://localhost:3000/api/student)
+
+### Isolated Runtime Strategy & Environment Security
+Sensitive infrastructure variables (such as `MONGO_URI` pointing to `RUDatabase` and the session token signing key `JWT_SECRET`) have been safely pre-configured inside the `docker-compose.yml` configuration file. The services route communications automatically over an isolated internal network (`rosterup-network`). No manual creation or modification of a `.env` file is requested or required to operate this workspace successfully.
