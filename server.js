@@ -39,6 +39,15 @@ const server = http.createServer(app);
 const io = new Server(server);
 initChatSocket(io);
 
+// 8.2HD Dockerization - Identity Verification Endpoint
+
+app.get('/api/student', (req, res) => {
+    res.json({
+        "name": "Nomalizo Mqhum",
+        "studentId": "225209796"
+    });
+});
+
 server.listen(port, () => {
     console.log(`Server is running on http://localhost:${port}`);
 });
